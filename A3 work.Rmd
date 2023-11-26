@@ -1,0 +1,188 @@
+```{r setup2, include=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
+#knitr::opts_chunk$set()
+library(aod)
+library(ggplot2)
+library(rms)
+library(gmodels)
+library(nnet)
+library(DAAG)
+library(ROCR)
+library(xtable)
+library(knitr)
+setwd("C:/Users/jiahangl/OneDrive - PennO365/data mining/A3")
+data <- read.csv("C:/Users/jiahangl/OneDrive - PennO365/data mining/A3/Logistic Regression Data.csv")
+head(data)
+```
+
+
+
+# **Methods**
+## **Exploratary**
+```{r}
+# Tabulation of the Dependent Variable
+#summary(data)
+table(data$DRINKING_D)
+prop.table(table(data$DRINKING_D))
+```
+
+```{r}
+# Tabulation of the Dependent Variable
+CrossTable(data$DRINKING_D, data$FATAL_OR_M,prop.r=FALSE,prop.chisq=FALSE, chisq=FALSE,prop.t=FALSE)
+CrossTable(data$DRINKING_D, data$OVERTURNED,prop.r=FALSE,prop.chisq=FALSE, chisq=FALSE,prop.t=FALSE)
+CrossTable(data$DRINKING_D, data$CELL_PHONE,prop.r=FALSE,prop.chisq=FALSE, chisq=FALSE,prop.t=FALSE)
+CrossTable(data$DRINKING_D, data$SPEEDING,prop.r=FALSE,prop.chisq=FALSE, chisq=FALSE,prop.t=FALSE)
+CrossTable(data$DRINKING_D, data$AGGRESSIVE,prop.r=FALSE,prop.chisq=FALSE, chisq=FALSE,prop.t=FALSE)
+CrossTable(data$DRINKING_D, data$DRIVER1617,prop.r=FALSE,prop.chisq=FALSE, chisq=FALSE,prop.t=FALSE)
+CrossTable(data$DRINKING_D, data$DRIVER65PLUS,prop.r=FALSE,prop.chisq=FALSE, chisq=FALSE,prop.t=FALSE)
+```
+
+# **Results**
+```{r}
+# Logistic regression
+#data$PCTBACHMOR <- factor(data$PCTBACHMOR)
+#data$MEDHHINC <- factor(data$MEDHHINC)
+#summary(data)
+```
+## **Logistic Regression**
+Based on the regression results, among all studied predictors, except for CELL_PHONE and PCTBACHMOR with a p value greater than 0.05, the rest of them are all significant. 
+The odd ratio provides some insights. The OR of FATAL_OR_M is 2.26 (95% CI, 1.9 – 2.65), suggesting that in crashes where there was a fatality or major injury (FATAL_OR_M = 1), the odds of the crash involving drunk driving are 2.26 times higher compared to crashes where there was no fatality or major injury (FATAL_OR_M = 0).In other words, crashes that result in fatalities or major injuries are more than twice as likely to involve drunk driving as those that do not result in such severe outcomes. The OR of OVERTURNED is 2.53(95% CI, 2.03 – 3.12), suggesting that in involved an overturned vehicle, the odds of the crash involving drunk driving are 2.53 times higher compared to crashes where no vehicle was overturned. The OR of CELL_PHONE is 1.03(95% CI, 0.68 – 1.49), suggesting that in crashes where driver was using cellphones, the odds of the crash involving drunk driving are 1.03 times higher compared to crashes where driver wasn’t using cellphones. The Odds Ratio (OR) associated with SPEEDING is 4.66(95% CI, 3.97 – 5.45). This indicates that in crashes involving speeding cars, the likelihood of drunk driving being a factor is 4.66 times greater than in crashes where speeding is not a factor. This substantial increase highlights the strong association between speeding and the likelihood of drunk driving in accidents. Also, the OR for AGGRESSIVE driving is 0.55(95% CI, 0.5 – 0.6). This suggests that in incidents involving aggressive driving, the probability of drunk driving being involved is only 55% of that in crashes where aggressive driving is not present. The OR of DRIVER1617 is 0.28(95% CI, 0.15 – 0.47), suggesting that in crashes involved at least one driver who was 16 or 17 years old, the odd of the crash involving drunk driving is 0.28 times as much as crashes where no driver was 16 or 17 years old. The OR of DRIVER65PLUS is 0.46(95% CI, 0.38 – 0.55), suggesting that in crashes involved at least one driver who was at least 65 years old, the odd of the crash involving drunk driving is 0.46 times as much as crashes where no driver was at least 65 years old.
+
+```{r}
+options(scipen=999)
+mylogit <- glm(DRINKING_D ~ FATAL_OR_M + OVERTURNED + CELL_PHONE + SPEEDING + AGGRESSIVE + DRIVER1617 + DRIVER65PLUS + PCTBACHMOR + MEDHHINC, data = data, family = "binomial") #Run a logit model
+summary(mylogit)
+```
+
+
+
+```{r}
+OR <- exp(coefficients(mylogit))  #odds ratio (exponentiated coefficients)
+OR
+```
+
+```{r}
+#Merging beta coefficients, odds ratios and 95% confidence intervals
+exp(cbind (OR = coef(mylogit), confint(mylogit)))
+```
+
+``````{r}
+#Merging Odds Ratios to 𝛽 Coefficients in R
+logitoutput <- summary(mylogit)
+logitcoeffs <- logitoutput$coefficients
+or_ci <- exp(cbind(OR=coef(mylogit),confint(mylogit)))
+finallogitoutput <- cbind(logitcoeffs,or_ci)
+finallogitoutput 
+```
+
+``````{r}
+fit <- mylogit$fitted       #Getting the y-hats (i.e., predicted values)
+hist(fit)       #Histogram of fitted values
+#print(length(fit))
+#print(length(data$DRINKING_D))
+fit.binary = (fit >= 0.02)
+CrossTable(fit.binary, data$DRINKING_D, prop.r=FALSE, prop.t=FALSE, prop.chisq=FALSE)
+```
+``````{r}
+fit.binary2 = (fit >= 0.03)
+CrossTable(fit.binary2, data$DRINKING_D, prop.r=FALSE, prop.t=FALSE, prop.chisq=FALSE)
+```
+
+``````{r}
+fit.binary5 = (fit >= 0.05)
+CrossTable(fit.binary5, data$DRINKING_D, prop.r=FALSE, prop.t=FALSE, prop.chisq=FALSE)
+```
+``````{r}
+fit.binary7 = (fit >= 0.07)
+CrossTable(fit.binary7, data$DRINKING_D, prop.r=FALSE, prop.t=FALSE, prop.chisq=FALSE)
+```
+``````{r}
+fit.binary8 = (fit >= 0.08)
+CrossTable(fit.binary8, data$DRINKING_D, prop.r=FALSE, prop.t=FALSE, prop.chisq=FALSE)
+```
+``````{r}
+fit.binary9 = (fit >= 0.09)
+CrossTable(fit.binary9, data$DRINKING_D, prop.r=FALSE, prop.t=FALSE, prop.chisq=FALSE)
+```
+``````{r}
+fit.binary10 = (fit >= 0.1)
+CrossTable(fit.binary10, data$DRINKING_D, prop.r=FALSE, prop.t=FALSE, prop.chisq=FALSE)
+```
+``````{r}
+fit.binary15 = (fit >= 0.15)
+CrossTable(fit.binary15, data$DRINKING_D, prop.r=FALSE, prop.t=FALSE, prop.chisq=FALSE)
+```
+``````{r}
+fit.binary20 = (fit >= 0.2)
+CrossTable(fit.binary20, data$DRINKING_D, prop.r=FALSE, prop.t=FALSE, prop.chisq=FALSE)
+```
+``````{r}
+fit.binary50 = (fit >= 0.5)
+CrossTable(fit.binary50, data$DRINKING_D, prop.r=FALSE, prop.t=FALSE, prop.chisq=FALSE)
+```
+We also computed the specificity, sensitivity, and misclassification rates for various probability cut-offs. The results, presented in the cutoff value table, reveal that a cutoff value of 0.02 corresponds to the highest misclassification rate at 0.89. In contrast, cutoff values of 0.2 and 0.5 demonstrate the lowest misclassification rates, both standing at 0.06. This implies that at these cutoff points, only 6% of cases were inaccurately classified, either as false positives or false negatives, indicating a higher accuracy in predictive performance.
+``````{r}
+df <- data.frame(
+  Cut_off_Value = c("0.02", "0.03", "0.05","0.07","0.08","0.09","0.10","0.15","0.2","0.5"),
+  Sensitivity = c(0.98, 0.98, 0.27,0.22,0.18,0.17,0.16,0.1,0.02,0),
+  Specificity = c(0.06, 0.06, 0.45,0.91,0.94,0.95,0.95,0.97,1,1),
+  Misclassification_Rate = c(0.89, 0.88, 0.52,0.13,0.1,0.1,0.1,0.1,0.06,0.06)
+)
+kable(df, caption = "Cut-off Value Table")
+```
+
+## **ROC**
+We also look at the ROC curve to further assess our model. Based on the result, the optimal cut off rate in this scenario, which minimizes both sensitivity and specificity, is 0.06. At this cutoff, the sensitivity is 0.66, meaning the model correctly identifies 66% of alcohol-related crashes. The specificity is 0.55, meaning the model correctly identifies 55% of crashes that are not alcohol related. The result is different from the result shown in the previous section, where the cutoff value 0.2 with the lowest minimum mis-classification rates of 0.06 is considered as the optimal one. The reason is that the former approach focuses more on overall accuracy of the model rather than balancing sensitivity and specificity, while the ROC approach prioritizes a more balanced approach between capturing as many true alcohol-related crashes as possible (sensitivity) and correctly identifying non-alcohol-related crashes (specificity).
+
+Also, the AUC (area under the ROC curve), which is usually interpreted as the probability that the model correctly ranks two randomly selected observations where one has 𝑦=1 and the other one has 𝑦=0, provides some insight. To elaborate, the AUC here is 0.64, meaning that there is a 64% chance that the model will be able to distinguish between a crash that was caused by alcohol and one that was not. This AUC is better than random guessing but shows that there is still considerable room for improvement in the model's ability to discriminate between positive and negative instances.
+
+``````{r}
+a <- cbind(data$DRINKING_D, fit)
+colnames(a) <- c("labels", "predictions")
+head(a)
+roc <- as.data.frame(a)
+pred <- prediction(roc$predictions, roc$labels)
+roc.perf = performance(pred, measure = "tpr", x.measure="fpr")
+plot(roc.perf)
+abline(a=0,b=1)
+auc.perf = performance(pred, measure ="auc")
+auc.perf@y.values
+opt.cut = function(perf, pred){
+  cut.ind = mapply(FUN=function(x, y, p){
+    d = (x - 0)^2 + (y-1)^2
+    ind = which(d == min(d))
+    c(sensitivity = y[[ind]], specificity = 1-x[[ind]], 
+      cutoff = p[[ind]])
+  }, perf@x.values, perf@y.values, pred@cutoffs)
+}
+print(opt.cut(roc.perf, pred))
+
+```
+
+## **Logistic Regression2**
+For comparison, we also run another logistic regression with the binary predictors only (FATAL_OR_M, OVERTURNED, CELL_PHONE, SPEEDING, AGGRESSIVE, DRIVER1617, DRIVER65PLUS). To elaborate, the OR of FATAL_OR_M is 2.25 (95% CI, 1.9 – 2.64), suggesting that in crashes where there was a fatality or major injury (FATAL_OR_M = 1), the odds of the crash involving drunk driving are 2.25 times higher compared to crashes where there was no fatality or major injury (FATAL_OR_M = 0).In other words, crashes that result in fatalities or major injuries are more than twice as likely to involve drunk driving as those that do not result in such severe outcomes. The OR of OVERTURNED is 2.56(95% CI, 2.06 – 3.16), suggesting that in involved an overturned vehicle, the odds of the crash involving drunk driving are 2.56 times higher compared to crashes where no vehicle was overturned. The OR of CELL_PHONE is 1.03(95% CI, 0.68 – 1.49), suggesting that in crashes where driver was using cellphones, the odds of the crash involving drunk driving are 1.03 times higher compared to crashes where driver wasn’t using cellphones. The OR associated with SPEEDING is 4.67(95% CI, 3.98 – 5.46). This indicates that in crashes involving speeding cars, the likelihood of drunk driving being a factor is 4.67 times greater than in crashes where speeding is not a factor. This substantial increase highlights the strong association between speeding and the likelihood of drunk driving in accidents. Also, the OR for AGGRESSIVE driving is 0.55(95% CI, 0.5 – 0.6). This suggests that in incidents involving aggressive driving, the probability of drunk driving being involved is only 55% of that in crashes where aggressive driving is not present. The OR of DRIVER1617 is 0.28(95% CI, 0.15 – 0.48), suggesting that in crashes involved at least one driver who was 16 or 17 years old, the odd of the crash involving drunk driving is 0.28 times as much as crashes where no driver was 16 or 17 years old. The OR of DRIVER65PLUS is 0.46(95% CI, 0.38 – 0.56), suggesting that in crashes involved at least one driver who was at least 65 years old, the odd of the crash involving drunk driving is 0.46 times as much as crashes where no driver was at least 65 years old.
+``````{r}
+options(scipen=999)
+mylogit2 <- glm(DRINKING_D ~ FATAL_OR_M + OVERTURNED + CELL_PHONE + SPEEDING + AGGRESSIVE + DRIVER1617 + DRIVER65PLUS, data = data, family = "binomial") #Run a logit model
+summary(mylogit2)
+```
+```{r}
+OR2 <- exp(coefficients(mylogit2))  #odds ratio (exponentiated coefficients)
+OR2
+```
+```{r}
+#Merging beta coefficients, odds ratios and 95% confidence intervals
+exp(cbind (OR2 = coef(mylogit2), confint(mylogit2)))
+```
+``````{r}
+#Merging Odds Ratios to 𝛽 Coefficients in R
+logitoutput2 <- summary(mylogit2)
+logitcoeffs2 <- logitoutput2$coefficients
+or_ci2 <- exp(cbind(OR2=coef(mylogit2),confint(mylogit2)))
+finallogitoutput2 <- cbind(logitcoeffs2,or_ci2)
+finallogitoutput2
+```
+As is shown in the result table, similar with the original model all the perdictors, except for the CELL_PHONE, are significant. Also, when looking at the AIC, the AIC for the original model is 18359.6, while the AIC for the new model is 18360.5, suggesting that the original model is a better model.
+
+``````{r}
+AIC(mylogit, mylogit2)
+```
