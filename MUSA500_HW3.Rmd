@@ -163,11 +163,16 @@ Exactly 1, it indicates that as the predictor has no effect on the odds of the o
 
 ## Quality of Model Fit
 Unlike OLS regression, R-Squared can’t be interpreted in logistic regression as the % of variance explained by the model. As there is no continuous outcome variable to explain variance for. Instead, it models the probability of an event occurring based on other independent variables.
+
 Akaike Information Criterion (AIC) is a measure of the goodness of fit of an estimated statistical model. It’s a relative measure of the information that is lost when a given model is used to describe reality and can be said to describe the tradeoff between precision and complexity of the model. Typically, the lower AIC, the better the fit.
+
 Sensitivity (True Positive Rate) measures the proportion of actual positives which are correctly identified as such and is complementary to the False Negative Rate. Specificity (Ture Negative Rate) measures the proportion of negatives which are correctly identified as such and is complementary to the False Positive Rate. Misclassification rate refers to both False  Negative Rate and False Positive Rate. Technically, we’re looking for more correct predictions, for example, being able to predict a high probability of Y=1 if Y is actually 1, and a low probability of Y=1 if Y is actually 0. That’s being said, higher values of sensitivity and specificity are better.
 The fitted values 𝑦̂, which refer to probabilities that Y=1.
 
-And similarly,
+$$
+P(Y = 1) = \hat{y}_i = \frac{e^{\hat{\beta}_0 + \hat{\beta}_1 x_{1i} + \ldots + \hat{\beta}_3 x_{3i}}}{1 + e^{\hat{\beta}_0 + \hat{\beta}_1 x_{1i} + \ldots + \hat{\beta}_3 x_{3i}}}
+$$
+And similarly, $$\epsilon = y_i - \hat{y}_i$$
 The choice of cut-off value demonstrates the trade-offs between different specificity and sensitivity and really depends on different scenarios. Using a cut-off of 0.5 may not be suitable for imbalanced datasets. Ideally, we should choose a cut-off value that will somehow balance and optimize the sensitivity and specificity. 
 
 ROC curve is a way to plot sensitivity (True Positive Rate) against Specificity (False Positive Rate), it can be used to examine predictive quality of the model and determine a best cut-off value by optimizing sensitivity and specificity. When interpreting the ROC Curve plot, a cut-off for which the ROC curve has the minimum distance from the upper left corner of the graph maximizes sensitivity and specificity. We can also look at the youden index, a cut-off for which sensitivity and specificity is maximized. For area under ROC Curve(AUC), it is a measure of prediction accuracy of the model. Usually, higher AUCs mean that we can find a cut-off value for which both sensitivity and specificity of the model are relatively high. The possible values range between 0.5 and 1, a rough guide for classifying the accuracy is:
