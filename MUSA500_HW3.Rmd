@@ -3,6 +3,9 @@ title: 'MUSA500 Homework 3: The Application of Logistic Regression to Examine th
 author: "Ling Chen, Hang Zhao, Jiahang Li"
 date: "`r Sys.Date()`"
 output:
+  pdf_document:
+    toc: true
+    latex_engine: xelatex
   html_document:
     toc: true
     toc_float: true
@@ -18,17 +21,11 @@ editor_options:
 
 We install a number of packages that we need in order to run logistic regression in R and specify the directory where our data are stored.
 
-```{r}
-#packageVersion("kableExtra")
-version
-```
-
 ```{r setup}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = "/Users/hangzhao/Documents/R/MUSA500 Assignment 3")
 options(scipen=999)
 options(knitr.table.format = "latex")
-#options(kableExtra.latex.load_packages = TRUE)
 ```
 
 ```{r warning=FALSE, message=FALSE, cache=FALSE}
@@ -42,11 +39,12 @@ library(DAAG)
 library(ROCR)
 library(xtable)
 library(knitr)
-library(kableExtra)
+#library(kableExtra)
 library(dplyr)
 #library(gridExtra)
 #library(purrr)
 library(tidyr)
+library(gt)
 
 palette2 <- c("#bae4bc","#0868ac")
 
@@ -122,13 +120,12 @@ Our car crash data set has 43,364 observations. The relevant variables are descr
 The logit function of the regression model, which incorporates multiple predictors (our model includes nine predictors, of which seven are binary and two are continuous), can be articulated as follows: 
 
 $$
-\begin{align*}
-\text{ODDS}(\text{DRINKING_D}=1) = \beta_{0} &+ \beta_{1} \times \text{FATAL_OR_M} + \beta_{2} \times \text{OVERTURNED} \\
-&+ \beta_{3} \times \text{CELL_PHONE} + \beta_{4} \times \text{SPEEDING} \\
-&+ \beta_{5} \times \text{AGGRESSIVE} + \beta_{6} \times \text{DRIVER1617} \\
-&+ \beta_{7} \times \text{DRIVER65PLUS} + \beta_{8} \times \text{PCTBACHMOR} \\
-&+ \beta_{9} \times \text{MEDHHINC} + \varepsilon
-\end{align*}
+\begin{aligned}
+ODDS(DRINKING\_D=1) = \beta_0 + \beta_1FATAL\_OR\_M + \beta_2OVERTURNED + \beta_3CELL\_PHONE \\
++ \beta_4SPEEDING + \beta_5AGGRESSIVE + \beta_6DRIVER1617 \\
++ \beta_7DRIVER65PLUS + \beta_8PCTBACHMOR
++ \beta_9 MEDHHINC + \varepsilon
+\end{aligned}
 $$
 
 The equation represents the log odds of the event where Y equals 1, corresponding to the dependent variable DRINKING_D being 1. This indicates the scenario where a drinking driver is involved. It's calculated as the ratio of the probability of DRINKING_D equals to 1 (presence of a drinking driver) to the probability of DRINKING_D does not equals to 1 (absence of a drinking driver). 
@@ -140,13 +137,15 @@ Solving the equation of logit function to make p=P(Y=1), we can get a function g
 $$
 p = \frac{e^{\beta_0 + \beta_1 x_1}}{1 + e^{\beta_0 + \beta_1 x_1}} = \frac{1}{1 + e^{-(\beta_0 + \beta_1 x_1)}}
 $$
+
 Plugging in the variables that we are interested in, in this case are the car crash model variables: 
+
 $$
-\begin{align*}
-p &= P(\text{DRINKING_D}=1) \\
-  &= \frac{1}{1 + e^{-(\beta_{0} + \beta_{1} \times \text{FATAL_OR_M} + \beta_{2} \times \text{OVERTURNED} + \ldots + \beta_{9} \times \text{MEDHHINC})}} \\
-  &= \frac{1}{1 + e^{-\left(\beta_{0} + \sum_{i=1}^{9} \beta_{i} \times X_{i}\right)}}
-\end{align*}
+\begin{aligned}
+p &= P(DRINKING\_D=1) \\
+  &= \frac{1}{1 + e^{-(\beta_0 + \beta_1FATAL\_OR\_M + \beta_2 OVERTURNED + \ldots + \beta_9 MEDHHINC)}} \\
+  &= \frac{1}{1 + e^{-\left(\beta_0 + \sum_{i=1}^{9} \beta_{i} \times X_{i}\right)}}
+\end{aligned}
 $$
 
 
@@ -172,15 +171,20 @@ The fitted values 𝑦̂, which refer to probabilities that Y=1.
 $$
 P(Y = 1) = \hat{y}_i = \frac{e^{\hat{\beta}_0 + \hat{\beta}_1 x_{1i} + \ldots + \hat{\beta}_3 x_{3i}}}{1 + e^{\hat{\beta}_0 + \hat{\beta}_1 x_{1i} + \ldots + \hat{\beta}_3 x_{3i}}}
 $$
-And similarly, $$\epsilon = y_i - \hat{y}_i$$
+
+And similarly, 
+$$
+\epsilon = y_i - \hat{y}_i
+$$
+
 The choice of cut-off value demonstrates the trade-offs between different specificity and sensitivity and really depends on different scenarios. Using a cut-off of 0.5 may not be suitable for imbalanced datasets. Ideally, we should choose a cut-off value that will somehow balance and optimize the sensitivity and specificity. 
 
-ROC curve is a way to plot sensitivity (True Positive Rate) against Specificity (False Positive Rate), it can be used to examine predictive quality of the model and determine a best cut-off value by optimizing sensitivity and specificity. When interpreting the ROC Curve plot, a cut-off for which the ROC curve has the minimum distance from the upper left corner of the graph maximizes sensitivity and specificity. We can also look at the youden index, a cut-off for which sensitivity and specificity is maximized. For area under ROC Curve(AUC), it is a measure of prediction accuracy of the model. Usually, higher AUCs mean that we can find a cut-off value for which both sensitivity and specificity of the model are relatively high. The possible values range between 0.5 and 1, a rough guide for classifying the accuracy is:
-•       .90-1 = excellent
-•       .80-.90 = good
-•       .70-.80 = fair
-•       .60-.70 = poor
-•       .50-.60 = fail
+ROC curve is a way to plot sensitivity (True Positive Rate) against Specificity (False Positive Rate), it can be used to examine predictive quality of the model and determine a best cut-off value by optimizing sensitivity and specificity. When interpreting the ROC Curve plot, a cut-off for which the ROC curve has the minimum distance from the upper left corner of the graph maximizes sensitivity and specificity. We can also look at the Youden index, a cut-off for which sensitivity and specificity is maximized. For area under ROC Curve(AUC), it is a measure of prediction accuracy of the model. Usually, higher AUCs mean that we can find a cut-off value for which both sensitivity and specificity of the model are relatively high. The possible values range between 0.5 and 1, a rough guide for classifying the accuracy is:
+.90-1 = excellent; 
+.80-.90 = good; 
+.70-.80 = fair;
+.60-.70 = poor;
+.50-.60 = fail;
 AUC may be interpreted as the probability that the model correctly ranks two randomly selected observations where one has Y=1 and the other one has Y=0.
 
 ## Assumptions of Logistic Regression
@@ -231,6 +235,7 @@ $$Probability(DRINKING) = \frac{Number \; of \; Drinking \; Driver}{Total \; Num
 Similarly, the odds of drinking drivers can be calculated using the formula
 
 $$Odds(DRINKING) = \frac{Number \; of \; Drinking \; Drivers}{Number \; of \; Non-drinking \; Drivers} = \frac{40879}{2485} = 16.45. $$
+
 ```{r categorical, message=FALSE, warning=FALSE, cache=FALSE}
 FATAL_Chisq <- CrossTable(mydata$DRINKING_D, mydata$FATAL_OR_M, prop.r=FALSE, prop.t=FALSE, prop.chisq=FALSE,chisq = TRUE)
 
@@ -258,6 +263,7 @@ chisq_values <- list(
 ```
 
 Prior to the predictive modeling, we use the Chi-Square test to determine whether the distribution of the categorical variable varies with respect to the drunk driving. From the table below, we can see that the majority of the variables except cell phone have a P-value lower than 0.05. Therefore, we can reject the null hypothesis and confirm that there are associations between drunk driving and overturned vehicle, speeding car, aggressive driving,young driver, old drivers, crash fatalities.
+
 ```{r binary_explore, echo=FALSE, warning=FALSE, cache=FALSE}
 
 explore <- data.frame(
@@ -274,9 +280,10 @@ explore <- explore %>%
   mutate(Drinking_Perc = 100* Drinking_N/43364,
          Non_Drinking_Perc=100*Non_Drinking_N/43364)
 
-kable(explore, caption = "Traffic Accident Statistics - Categorical Variables") %>% 
-  kable_styling()
-
+explore %>%gt() %>% 
+  tab_header(title = 'Traffic Accident Statistics - Categorical Variables') %>%
+   fmt_number(decimals = 5, drop_trailing_zeros = TRUE)
+  
 ```
 
 ```{r continuous_explore, echo=FALSE, message=FALSE, warning=FALSE, cache=FALSE}
@@ -303,9 +310,9 @@ explore_continuous <- data.frame(
   P_value = c(0.9137,0.16)
 )
 
-
-kable(explore_continuous, caption = "Traffic Accident Statistics - Continuous Variables") %>% 
-  kable_styling()
+explore_continuous %>%gt() %>% 
+  tab_header(title = 'Traffic Accident Statistics - Continuous Variables') %>%
+   fmt_number(decimals = 5, drop_trailing_zeros = TRUE)
 ```
 
     
@@ -329,7 +336,9 @@ mydata %>%
 
 ## Logistic Regression Assumptions
 ### Pairwise Pearson Correlations Matrix
+
 The correlation matrix in the graph and table is shown below. It is used to test multicollinearity between the predictors. The table shows that the greatest correlation coefficients between predictors are 0.50 and 0.47, which are not strongly correlated. Therefore, no severe multicollinearity between the predictors has been observed.
+
 ```{r matrix,echo=FALSE, fig.height=4, fig.width=4}
 # correlation matrix
 data_cor <- mydata %>%
@@ -436,7 +445,9 @@ CrossTable(fit.binary20, mydata$DRINKING_D, prop.r=FALSE, prop.t=FALSE, prop.chi
 fit.binary50 = (fit >= 0.5)
 CrossTable(fit.binary50, mydata$DRINKING_D, prop.r=FALSE, prop.t=FALSE, prop.chisq=FALSE)
 ```
+
 We also computed the specificity, sensitivity, and misclassification rates for various probability cut-offs. The results, presented in the cutoff value table, reveal that a cutoff value of 0.02 corresponds to the highest misclassification rate at 0.89. In contrast, cutoff values of 0.2 and 0.5 demonstrate the lowest misclassification rates, both standing at 0.06. This implies that at these cutoff points, only 6% of cases were inaccurately classified, either as false positives or false negatives, indicating a higher accuracy in predictive performance.
+
 ```{r}
 df <- data.frame(
   Cut_off_Value = c("0.02", "0.03", "0.05","0.07","0.08","0.09","0.10","0.15","0.2","0.5"),
@@ -444,8 +455,10 @@ df <- data.frame(
   Specificity = c(0.06, 0.06, 0.45,0.91,0.94,0.95,0.95,0.97,1,1),
   Misclassification_Rate = c(0.89, 0.88, 0.52,0.13,0.1,0.1,0.1,0.1,0.06,0.06)
 )
-kable(df, caption = "Cut-off Value Table") %>% 
-  kable_styling()
+
+df %>%gt() %>% 
+  tab_header(title = 'Cut-off Value Table') %>%
+   fmt_number(decimals = 5, drop_trailing_zeros = TRUE)
 
 ```
 
@@ -479,6 +492,7 @@ print(opt.cut(roc.perf, pred))
 
 ### Logistic Regression With Binary Predictors Only
 For comparison, we also run another logistic regression with the binary predictors only (FATAL_OR_M, OVERTURNED, CELL_PHONE, SPEEDING, AGGRESSIVE, DRIVER1617, DRIVER65PLUS). To elaborate, the OR of FATAL_OR_M is 2.25 (95% CI, 1.9 – 2.64), suggesting that in crashes where there was a fatality or major injury (FATAL_OR_M = 1), the odds of the crash involving drunk driving are 2.25 times higher compared to crashes where there was no fatality or major injury (FATAL_OR_M = 0).In other words, crashes that result in fatalities or major injuries are more than twice as likely to involve drunk driving as those that do not result in such severe outcomes. The OR of OVERTURNED is 2.56(95% CI, 2.06 – 3.16), suggesting that in involved an overturned vehicle, the odds of the crash involving drunk driving are 2.56 times higher compared to crashes where no vehicle was overturned. The OR of CELL_PHONE is 1.03(95% CI, 0.68 – 1.49), suggesting that in crashes where driver was using cellphones, the odds of the crash involving drunk driving are 1.03 times higher compared to crashes where driver wasn’t using cellphones. The OR associated with SPEEDING is 4.67(95% CI, 3.98 – 5.46). This indicates that in crashes involving speeding cars, the likelihood of drunk driving being a factor is 4.67 times greater than in crashes where speeding is not a factor. This substantial increase highlights the strong association between speeding and the likelihood of drunk driving in accidents. Also, the OR for AGGRESSIVE driving is 0.55(95% CI, 0.5 – 0.6). This suggests that in incidents involving aggressive driving, the probability of drunk driving being involved is only 55% of that in crashes where aggressive driving is not present. The OR of DRIVER1617 is 0.28(95% CI, 0.15 – 0.48), suggesting that in crashes involved at least one driver who was 16 or 17 years old, the odd of the crash involving drunk driving is 0.28 times as much as crashes where no driver was 16 or 17 years old. The OR of DRIVER65PLUS is 0.46(95% CI, 0.38 – 0.56), suggesting that in crashes involved at least one driver who was at least 65 years old, the odd of the crash involving drunk driving is 0.46 times as much as crashes where no driver was at least 65 years old.
+
 ```{r}
 mylogit2 <- glm(DRINKING_D ~ FATAL_OR_M + OVERTURNED + CELL_PHONE + SPEEDING + AGGRESSIVE + DRIVER1617 + DRIVER65PLUS, data = mydata, family = "binomial") #Run a logit model
 summary(mylogit2)
@@ -502,6 +516,7 @@ or_ci2 <- exp(cbind(OR2=coef(mylogit2),confint(mylogit2)))
 finallogitoutput2 <- round(cbind(logitcoeffs2,or_ci2),8)
 finallogitoutput2
 ```
+
 As is shown in the result table, similar with the original model all the perdictors, except for the CELL_PHONE, are significant. Also, when looking at the AIC, the AIC for the original model is 18359.6, while the AIC for the new model is 18360.5, suggesting that the original model is a better model. 
 
 ```{r}
@@ -528,10 +543,15 @@ cat("\nPercentages:\n")
 print(percentages)
 
 ```
+
 Our dependent variable DRINKING_D has the appropriate count of each category, having 43364 sample size with 2485 events where DRINKING_D equals 1 occurring, which account for 5.73% of the total. From what Paul Allison proposed, it could be problematic when the sample size is small and there is rarity of the events, which does not really apply in our case. Consequently, the application of logistic regression in our study is appropriate, given the substantial sample size and the proportion of events within it.
 
 ## Limitations
 The primary limitation of our analysis is reflected in the Area Under the Curve (AUC) of the Receiver Operating Characteristic (ROC) curve, a crucial metric for assessing the model's predictive accuracy. In our model, the AUC is approximately 0.64, which, according to standard guidelines, is categorized as poor (grade D). This rating indicates a relatively low effectiveness of the model in distinguishing between the binary outcomes, specifically in correctly predicting '1' responses as '1s' and '0' responses as '0s'.
 
 
+# Reference
+National Highway Traffic Safety Administration. (2020). Drunk Driving. U.S.Department of Transportation. https://www.nhtsa.gov/risky-driving/drunk-driving#:~:text=About%2031%25%20of%20all%20traffic,killed%20in%20these%20preventable%20crashes 
 
+City of Philadelphia. (2023). City of Philadelphia Releases Vision Zero Annual Report 2023. 
+https://www.phila.gov/2023-10-10-city-of-philadelphia-releases-vision-zero-annual-report-2023/
