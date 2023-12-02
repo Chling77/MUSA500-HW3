@@ -18,10 +18,17 @@ editor_options:
 
 We install a number of packages that we need in order to run logistic regression in R and specify the directory where our data are stored.
 
+```{r}
+#packageVersion("kableExtra")
+version
+```
+
 ```{r setup}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = "/Users/hangzhao/Documents/R/MUSA500 Assignment 3")
 options(scipen=999)
+options(knitr.table.format = "latex")
+#options(kableExtra.latex.load_packages = TRUE)
 ```
 
 ```{r warning=FALSE, message=FALSE, cache=FALSE}
@@ -116,16 +123,11 @@ The logit function of the regression model, which incorporates multiple predicto
 
 $$
 \begin{align*}
-ODDS(\text{DRINKING_D}=1) = \beta_{0} &+ \beta_{1} \times\text{FATAL_OR_M}
-+ \beta_{2} \times \text{OVERTURNED} \\
-&+ \beta_{3} \times \text{CELL_PHONE} \\
-&+ \beta_{4} \times \text{SPEEDING} \\
-&+ \beta_{5} \times \text{AGGRESSIVE} \\
-&+ \beta_{6} \times \text{DRIVER1617} \\
-&+ \beta_{7} \times \text{DRIVER65PLUS} \\
-&+ \beta_{8} \times \text{PCTBACHMOR} \\
-&+ \beta_{9} \times \text{MEDHHINC} \\
-&+ \varepsilon
+\text{ODDS}(\text{DRINKING_D}=1) = \beta_{0} &+ \beta_{1} \times \text{FATAL_OR_M} + \beta_{2} \times \text{OVERTURNED} \\
+&+ \beta_{3} \times \text{CELL_PHONE} + \beta_{4} \times \text{SPEEDING} \\
+&+ \beta_{5} \times \text{AGGRESSIVE} + \beta_{6} \times \text{DRIVER1617} \\
+&+ \beta_{7} \times \text{DRIVER65PLUS} + \beta_{8} \times \text{PCTBACHMOR} \\
+&+ \beta_{9} \times \text{MEDHHINC} + \varepsilon
 \end{align*}
 $$
 
@@ -141,9 +143,9 @@ $$
 Plugging in the variables that we are interested in, in this case are the car crash model variables: 
 $$
 \begin{align*}
-p=P(\text{DRINKING_D}=1) 
-&= \frac{1}{1 + e^{-(\beta_{0} + \beta_{1} \times \text{FATAL_OR_M} + \beta_{2} \times \text{OVERTURNED} + \beta_{3} \times \text{CELL_PHONE} + \beta_{4} \times \text{SPEEDING} + \beta_{5} \times \text{AGGRESSIVE} + \beta_{6} \times \text{DRIVER1617} + \beta_{7} \times \text{DRIVER65PLUS} + \beta_{8} \times \text{PCTBACHMOR} + \beta_{9} \times \text{MEDHHINC})}} \\
-&= \frac{1}{1 + e^{-\left(\sum_{i=0}^{9} \beta_{i} \times X_{i}\right)}}
+p &= P(\text{DRINKING_D}=1) \\
+  &= \frac{1}{1 + e^{-(\beta_{0} + \beta_{1} \times \text{FATAL_OR_M} + \beta_{2} \times \text{OVERTURNED} + \ldots + \beta_{9} \times \text{MEDHHINC})}} \\
+  &= \frac{1}{1 + e^{-\left(\beta_{0} + \sum_{i=1}^{9} \beta_{i} \times X_{i}\right)}}
 \end{align*}
 $$
 
@@ -430,7 +432,7 @@ fit.binary50 = (fit >= 0.5)
 CrossTable(fit.binary50, mydata$DRINKING_D, prop.r=FALSE, prop.t=FALSE, prop.chisq=FALSE)
 ```
 We also computed the specificity, sensitivity, and misclassification rates for various probability cut-offs. The results, presented in the cutoff value table, reveal that a cutoff value of 0.02 corresponds to the highest misclassification rate at 0.89. In contrast, cutoff values of 0.2 and 0.5 demonstrate the lowest misclassification rates, both standing at 0.06. This implies that at these cutoff points, only 6% of cases were inaccurately classified, either as false positives or false negatives, indicating a higher accuracy in predictive performance.
-``````{r}
+```{r}
 df <- data.frame(
   Cut_off_Value = c("0.02", "0.03", "0.05","0.07","0.08","0.09","0.10","0.15","0.2","0.5"),
   Sensitivity = c(0.98, 0.98, 0.27,0.22,0.18,0.17,0.16,0.1,0.02,0),
@@ -447,7 +449,7 @@ We also look at the ROC curve to further assess our model. Based on the result, 
 
 Also, the AUC (area under the ROC curve), which is usually interpreted as the probability that the model correctly ranks two randomly selected observations where one has 𝑦=1 and the other one has 𝑦=0, provides some insight. To elaborate, the AUC here is 0.64, meaning that there is a 64% chance that the model will be able to distinguish between a crash that was caused by alcohol and one that was not. This AUC is better than random guessing but shows that there is still considerable room for improvement in the model's ability to discriminate between positive and negative instances.
 
-``````{r}
+```{r}
 a <- cbind(mydata$DRINKING_D, fit)
 colnames(a) <- c("labels", "predictions")
 head(a)
@@ -503,4 +505,28 @@ AIC(mylogit, mylogit2)
 
 # Discussion
 ## Summarizing findings
+In our study, we analyzed a dataset of 43,364 car crash observations to identify factors associated with crashes involving drunk driving. The dependent variable was 'DRINKING_D' (Drinking driver indicator), and various predictors like crash severity, vehicle overturning, cell phone usage, speeding, aggressive driving, age of drivers, and socioeconomic factors including median house income and percentage of individuals getting bachelor's degree or higher were examined. 
+
+Based on the logistic regression result, factors such as crash severity ('FATAL_OR_M'), vehicle overturning ('OVERTURNED'), speeding ('SPEEDING'), age groups of drivers ('DRIVER1617' and 'DRIVER65PLUS'), and median house income ('MEDHHINC') significantly predicted drunk driving incidents, although the 'MEDHHINC' is not that significant which has a p-value of 0.036 and beta coefficient of 0.0000028. On the contrary, cell phone usage ('CELL_PHONE') and education level ('PCTBACHMOR') were not significantly associated with the drunk driver crashes. Overall, the findings align closely with our initial expectations. Most variables exhibited behavior that was anticipated, particularly the strong associations observed between speeding and vehicle overturning with instances of drunk driving.It is also reasonable that the cell phone usage, socioeconomic factor median house income and education level do not necessarily have a significant impact on the likelihood of drunk driving incidents. However, it is a bit surprising that aggressive driving, are associated with ORs less than 1, which is suggesting a lower likelihood of drunk driving but is not following our initial expectation. 
+
+```{r}
+# calculate count of each category
+counts <- table(mydata$DRINKING_D)
+
+# Calculate the percentage for each category
+percentages <- prop.table(counts) * 100
+
+# Print the counts and percentages
+cat("Counts:\n")
+print(counts)
+cat("\nPercentages:\n")
+print(percentages)
+
+```
+Our dependent variable DRINKING_D has the appropriate count of each category, having 43364 sample size with 2485 events where DRINKING_D equals 1 occurring, which account for 5.73% of the total. From what Paul Allison proposed, it could be problematic when the sample size is small and there is rarity of the events, which does not really apply in our case. Consequently, the application of logistic regression in our study is appropriate, given the substantial sample size and the proportion of events within it.
+
 ## Limitations
+The primary limitation of our analysis is reflected in the Area Under the Curve (AUC) of the Receiver Operating Characteristic (ROC) curve, a crucial metric for assessing the model's predictive accuracy. In our model, the AUC is approximately 0.64, which, according to standard guidelines, is categorized as poor (grade D). This rating indicates a relatively low effectiveness of the model in distinguishing between the binary outcomes, specifically in correctly predicting '1' responses as '1s' and '0' responses as '0s'.
+
+
+
